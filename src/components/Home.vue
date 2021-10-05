@@ -2,7 +2,14 @@
   <h1>FFT</h1>
   <input type="file" accept="image/png, image/jpeg" :onchange="loadImage" />
   <div>
-    <canvas ref="canvas" width="512" height="512" />
+    <canvas
+      ref="canvas"
+      width="512"
+      height="512"
+      @mousedown="masking = true"
+      @mouseup="cancelMasking"
+      @mousemove="maskSpectrum"
+    />
     <canvas ref="resultCanvas" width="512" height="512" />
   </div>
 
@@ -19,10 +26,11 @@ import { fftshift } from 'fftshift'
 import { drawImage } from 'canvas-object-fit'
 import { ref, onMounted } from 'vue'
 
-const minRadius = ref(20)
-const maxRadius = ref(60)
+const minRadius = ref(0)
+const maxRadius = ref(400)
 const inverse = ref(false)
 const gamma = ref(1.5)
+const masking = ref(false)
 
 const canvas = ref(null)
 const resultCanvas = ref(null)
@@ -31,6 +39,7 @@ let resultContext = ref(null)
 
 let imageData = null
 let originalFFT = null
+let mask = nj.zeros([512, 512])
 
 const loadImage = function loadImage(input) {
   const files = input.target.files
@@ -100,7 +109,10 @@ function calculateImage() {
     }
 
     const distanceToCenter = Math.sqrt(Math.pow(x - imageData.width / 2, 2) + Math.pow(y - imageData.width / 2, 2))
-    if ((!inverse.value && (distanceToCenter < minRadius.value || distanceToCenter > maxRadius.value)) || (inverse.value && (distanceToCenter > minRadius.value && distanceToCenter < maxRadius.value))) {
+
+    const isOutside = distanceToCenter < minRadius.value || distanceToCenter > maxRadius.value
+    const isInside = distanceToCenter > minRadius.value && distanceToCenter < maxRadius.value
+    if ((!inverse.value && isOutside) || (inverse.value && isInside) || mask.get(y, x)) {
       magnitudesArray.push(0)
       fft.set(y, x, 0, 0)
       fft.set(y, x, 1, 0)
@@ -117,7 +129,7 @@ function calculateImage() {
   for (let i = 0; i < imageData.width * imageData.height; i++) {
     const index = i * 4
 
-    const magnitudeValue = magnitudesArray[i] * 255 / maxMag
+    const magnitudeValue = (magnitudesArray[i] * 255) / maxMag
     fourierMagnitudeSpectrum.data[index] = magnitudeValue
     fourierMagnitudeSpectrum.data[index + 1] = magnitudeValue
     fourierMagnitudeSpectrum.data[index + 2] = magnitudeValue
@@ -133,6 +145,28 @@ function calculateImage() {
 
   resultContext.putImageData(inverseFourier, 0, 0)
   context.putImageData(fourierMagnitudeSpectrum, 0, 0)
+}
+
+function maskSpectrum(event) {
+  if (!masking.value) {
+    return
+  }
+
+  const radius = 10
+  for (let i = -radius; i < radius; i++) {
+    for (let j = -radius; j < radius; j++) {
+      if (Math.sqrt(i * i + j * j) > radius) {
+        continue
+      }
+
+      mask.set(i + event.offsetY, j + event.offsetX, 1)
+    }
+  }
+}
+
+function cancelMasking() {
+  masking.value = false
+  calculateImage()
 }
 
 onMounted(() => {
