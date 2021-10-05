@@ -4,13 +4,18 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "postinstall": "patch-package"
   },
   "dependencies": {
+    "canvas-object-fit": "^0.8.1",
+    "fftshift": "^1.0.1",
+    "numjs": "^0.16.1",
     "vue": "^3.2.16"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^1.9.2",
+    "patch-package": "^6.4.7",
     "vite": "^2.6.0"
   }
 }
