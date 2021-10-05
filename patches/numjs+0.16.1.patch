@@ -1,0 +1,13 @@
+diff --git a/node_modules/numjs/src/images/data.js b/node_modules/numjs/src/images/data.js
+index 7ab39f1..0ab1f16 100644
+--- a/node_modules/numjs/src/images/data.js
++++ b/node_modules/numjs/src/images/data.js
+@@ -3,7 +3,7 @@ var path = require('path');
+ 
+ var read = require('./read');
+ 
+-var DATA_DIR = path.join(path.resolve(__dirname), '../../data');
++var DATA_DIR = '../../data';
+ 
+ function getArray (fileName) {
+   return read(path.join(DATA_DIR, fileName));
