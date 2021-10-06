@@ -6,9 +6,10 @@
       ref="canvas"
       width="512"
       height="512"
+      @click="maskClick"
       @mousedown="masking = true"
       @mouseup="cancelMasking"
-      @mousemove="maskSpectrum"
+      @mousemove="maskDrag"
     />
     <canvas ref="resultCanvas" width="512" height="512" />
   </div>
@@ -18,6 +19,7 @@
   <input v-model="inverse" type="checkbox" @change="calculateImage" />
 
   <input v-model="gamma" type="range" min="0" max="3" step="0.1" @mouseup="calculateImage" />
+  <button @click="clearMask">Clear Mask</button>
 </template>
 
 <script setup>
@@ -147,11 +149,20 @@ function calculateImage() {
   context.putImageData(fourierMagnitudeSpectrum, 0, 0)
 }
 
-function maskSpectrum(event) {
+function maskDrag(event) {
   if (!masking.value) {
     return
   }
 
+  maskSpectrum(event.offsetX, event.offsetY)
+}
+
+function maskClick(event) {
+  maskSpectrum(event.offsetX, event.offsetY)
+  calculateImage()
+}
+
+function maskSpectrum(x, y) {
   const radius = 10
   for (let i = -radius; i < radius; i++) {
     for (let j = -radius; j < radius; j++) {
@@ -159,13 +170,18 @@ function maskSpectrum(event) {
         continue
       }
 
-      mask.set(i + event.offsetY, j + event.offsetX, 1)
+      mask.set(i + y, j + x, 1)
     }
   }
 }
 
 function cancelMasking() {
   masking.value = false
+  calculateImage()
+}
+
+function clearMask() {
+  mask = nj.zeros([512, 512])
   calculateImage()
 }
 
