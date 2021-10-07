@@ -8,11 +8,28 @@
 
       <div class="navbar-end">
         <div class="navbar-item">
-          <div class="buttons">
-            <a class="button is-primary">
-              <strong>Sign up</strong>
-            </a>
-            <a class="button is-light"> Log in </a>
+          <div class="columns">
+            <github-button
+              href="https://github.com/igormandello/fourier-transform-visualization/subscription"
+              data-icon="octicon-eye"
+              data-size="large"
+              data-show-count="true"
+              aria-label="Watch igormandello/fourier-transform-visualization on GitHub"
+              class="column"
+            >
+              Watch
+            </github-button>
+
+            <github-button
+              href="https://github.com/igormandello/fourier-transform-visualization"
+              data-icon="octicon-star"
+              data-size="large"
+              data-show-count="true"
+              aria-label="Star igormandello/fourier-transform-visualization on GitHub"
+              class="column"
+            >
+              Star
+            </github-button>
           </div>
         </div>
       </div>
@@ -21,6 +38,7 @@
 </template>
 
 <script setup>
+import GithubButton from 'vue-github-button'
 </script>
 
 <style lang="scss"></style>
