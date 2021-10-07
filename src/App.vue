@@ -1,14 +1,14 @@
 <template>
   <Header />
   <div class="content">
-    <Home />
+    <Visualization />
   </div>
   <Footer />
 </template>
 
 <script setup>
 import Header from './components/Header.vue'
-import Home from './components/Home.vue'
+import Visualization from './components/Visualization.vue'
 import Footer from './components/Footer.vue'
 </script>
 

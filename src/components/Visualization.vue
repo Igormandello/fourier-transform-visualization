@@ -29,7 +29,7 @@
           type="range"
           min="0"
           max="400"
-          @mouseup="calculateImage"
+          @change="calculateImage"
         />
       </div>
 
@@ -44,7 +44,7 @@
           type="range"
           min="0"
           max="400"
-          @mouseup="calculateImage"
+          @change="calculateImage"
         />
       </div>
 
@@ -60,7 +60,7 @@
           min="0.1"
           max="3"
           step="0.1"
-          @mouseup="calculateImage"
+          @change="calculateImage"
         />
       </div>
 
@@ -70,6 +70,14 @@
           <span class="tag is-primary">{{ brushSize }}</span>
         </label>
         <input v-model="brushSize" class="slider is-circle is-primary" type="range" min="5" max="50" step="1" />
+      </div>
+
+      <div class="column field">
+        <label class="label">
+          Minimum value:
+          <span class="tag is-primary">{{ minimumValue }}</span>
+        </label>
+        <input v-model="minimumValue" class="slider is-circle is-primary" type="range" min="0" max="255" step="1" @change="calculateImage" />
       </div>
 
       <div class="column field is-narrow">
@@ -120,6 +128,7 @@ const maxRadius = ref(400)
 const inverse = ref(false)
 const gamma = ref(1.5)
 const brushSize = ref(10)
+const minimumValue = ref(0)
 const masking = ref(false)
 
 const canvas = ref(null)
@@ -236,7 +245,7 @@ function calculateImage() {
     fourierMagnitudeSpectrum.data[index + 3] = 255
 
     const inverseFourierValue = Math.pow(ifft[i * 2], 1 / gamma.value) * 255
-    const imageValue = inverseFourierValue < 0 ? 0 : inverseFourierValue
+    const imageValue = inverseFourierValue < 0 ? 0 : (inverseFourierValue < minimumValue.value ? 0 : inverseFourierValue)
     inverseFourier.data[index] = imageValue
     inverseFourier.data[index + 1] = imageValue
     inverseFourier.data[index + 2] = imageValue
