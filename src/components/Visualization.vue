@@ -2,83 +2,16 @@
   <section class="section container is-max-widescreen">
     <div class="columns is-centered" v-if="file === null">
       <div class="column is-one-quarter">
-        <div class="file is-centered is-boxed">
-          <label class="file-label">
-            <input class="file-input" type="file" accept="image/png, image/jpeg" :onchange="loadImage" />
-            <span class="file-cta">
-              <span class="file-icon">
-                <FontAwesomeIcon icon="upload" />
-              </span>
-              <span class="file-label">Choose an image...</span>
-            </span>
-          </label>
-        </div>
+        <FileInput @change="loadImage" />
       </div>
     </div>
 
     <div class="columns is-centered is-variable is-6" v-else>
-      <div class="column field">
-        <label class="label">
-          Minimum Radius:
-          <span class="tag is-primary">{{ minRadius }}</span>
-        </label>
-        <input
-          v-model="minRadius"
-          id="min-radius"
-          class="slider is-circle is-primary"
-          type="range"
-          min="0"
-          max="400"
-          @change="calculateImage"
-        />
-      </div>
-
-      <div class="column field">
-        <label class="label">
-          Maximum Radius:
-          <span class="tag is-primary">{{ maxRadius }}</span>
-        </label>
-        <input
-          v-model="maxRadius"
-          class="slider is-circle is-primary"
-          type="range"
-          min="0"
-          max="400"
-          @change="calculateImage"
-        />
-      </div>
-
-      <div class="column field">
-        <label class="label">
-          Gamma:
-          <span class="tag is-primary">{{ gamma }}</span>
-        </label>
-        <input
-          v-model="gamma"
-          class="slider is-circle is-primary"
-          type="range"
-          min="0.1"
-          max="3"
-          step="0.1"
-          @change="calculateImage"
-        />
-      </div>
-
-      <div class="column field">
-        <label class="label">
-          Brush size:
-          <span class="tag is-primary">{{ brushSize }}</span>
-        </label>
-        <input v-model="brushSize" class="slider is-circle is-primary" type="range" min="5" max="50" step="1" />
-      </div>
-
-      <div class="column field">
-        <label class="label">
-          Minimum value:
-          <span class="tag is-primary">{{ minimumValue }}</span>
-        </label>
-        <input v-model="minimumValue" class="slider is-circle is-primary" type="range" min="0" max="255" step="1" @change="calculateImage" />
-      </div>
+      <Slider v-model="minRadius" label="Minimum Radius" min="0" max="400" step="1" @change="calculateImage" />
+      <Slider v-model="maxRadius" label="Maximum Radius" min="0" max="400" step="1" @change="calculateImage" />
+      <Slider v-model="gamma" label="Gamma" min="0.1" max="3" step="0.1" @change="calculateImage" />
+      <Slider v-model="brushSize" label="Brush size" min="5" max="50" step="1" />
+      <Slider v-model="minimumValue" label="Minimum value" min="0" max="255" step="1" @change="calculateImage" />
 
       <div class="column field is-narrow">
         <label class="label">Invert Filter</label>
@@ -115,6 +48,9 @@
 </template>
 
 <script setup>
+import Slider from '@/components/Slider.vue'
+import FileInput from '@/components/FileInput.vue'
+
 import { ref, onMounted } from 'vue'
 import nj from 'numjs'
 import { fftshift, ifftshift } from 'fftshift'
@@ -128,7 +64,7 @@ const maxRadius = ref(400)
 const inverse = ref(false)
 const gamma = ref(1.5)
 const brushSize = ref(10)
-const minimumValue = ref(0)
+const minimumValue = ref('0')
 const masking = ref(false)
 
 const canvas = ref(null)
@@ -141,7 +77,7 @@ let originalFFT = null
 let mask = nj.zeros([512, 512])
 let lastMaskPoint = null
 
-const loadImage = function loadImage(input) {
+function loadImage(input) {
   const files = input.target.files
   if (!files || !files[0]) {
     return
@@ -244,8 +180,8 @@ function calculateImage() {
     fourierMagnitudeSpectrum.data[index + 2] = magnitudeValue
     fourierMagnitudeSpectrum.data[index + 3] = 255
 
-    const inverseFourierValue = Math.pow(ifft[i * 2], 1 / gamma.value) * 255
-    const imageValue = inverseFourierValue < 0 ? 0 : (inverseFourierValue < minimumValue.value ? 0 : inverseFourierValue)
+    const inverseFourierValue = Math.floor(Math.pow(ifft[i * 2], 1 / gamma.value) * 255)
+    const imageValue = inverseFourierValue < 0 ? 0 : inverseFourierValue <= minimumValue.value ? 0 : inverseFourierValue
     inverseFourier.data[index] = imageValue
     inverseFourier.data[index + 1] = imageValue
     inverseFourier.data[index + 2] = imageValue
