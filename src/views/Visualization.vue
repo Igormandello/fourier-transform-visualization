@@ -59,11 +59,11 @@ import bresenham from '@/scripts/bresenham'
 
 const file = ref(null)
 
-const minRadius = ref(0)
-const maxRadius = ref(400)
+const minRadius = ref('0')
+const maxRadius = ref('400')
 const inverse = ref(false)
-const gamma = ref(1.5)
-const brushSize = ref(10)
+const gamma = ref('1.5')
+const brushSize = ref('10')
 const minimumValue = ref('0')
 const masking = ref(false)
 

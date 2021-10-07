@@ -1,9 +1,8 @@
 @import '@/../node_modules/bulma/bulma.sass';
 @import '@/../node_modules/bulma-slider';
 @import '@/../node_modules/bulma-switch';
-// @import '@/../node_modules/bulma-switch/src/sass/index.sass';
 
-.navbar.is-light .navbar-start > .navbar-item.link-active {
+.navbar-item.router-link-active {
   color: $navbar-item-hover-color;
 
   &:hover {

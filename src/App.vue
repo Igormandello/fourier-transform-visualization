@@ -1,14 +1,11 @@
 <template>
   <Header />
-  <div class="content">
-    <Visualization />
-  </div>
+  <router-view class="content" />
   <Footer />
 </template>
 
 <script setup>
 import Header from './components/Header.vue'
-import Visualization from './components/Visualization.vue'
 import Footer from './components/Footer.vue'
 </script>
 
@@ -30,7 +27,10 @@ html {
   min-height: 100vh;
 
   > .content {
+    display: flex;
+    flex-direction: column;
     flex-grow: 1;
+    justify-content: center;
   }
 }
 </style>

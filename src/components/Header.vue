@@ -3,8 +3,8 @@
     <div class="navbar-menu is-active">
       <div class="navbar-start">
         <img class="navbar-item" src="/logo.png" />
-        <a class="navbar-item">Fourier Magnitude Spectrum</a>
-        <a class="navbar-item">Fourier Series</a>
+        <router-link class="navbar-item" to="/">Fourier Magnitude Spectrum</router-link>
+        <router-link class="navbar-item" to="/series">Fourier Series</router-link>
       </div>
 
       <div class="navbar-end">
