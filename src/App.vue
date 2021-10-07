@@ -13,6 +13,10 @@ import Home from './components/Home.vue'
 <style lang="scss">
 @import '@/styles/main.scss';
 
+html {
+  background-color: #fafafa;
+}
+
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;

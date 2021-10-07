@@ -1,8 +1,8 @@
 <template>
-  <section class="section">
-    <div class="columns is-centered">
+  <section class="section container is-max-widescreen">
+    <div class="columns is-centered" v-if="file === null">
       <div class="column is-one-quarter">
-        <div class="file is-centered is-boxed has-name">
+        <div class="file is-centered is-boxed">
           <label class="file-label">
             <input class="file-input" type="file" accept="image/png, image/jpeg" :onchange="loadImage" />
             <span class="file-cta">
@@ -11,35 +11,53 @@
               </span>
               <span class="file-label">Choose an image...</span>
             </span>
-            <span class="file-name">{{ filename }}</span>
           </label>
         </div>
       </div>
     </div>
 
-    <div class="columns is-centered">
+    <div class="columns is-centered is-variable is-6" v-else>
       <div class="column field">
-        <label class="label">Minimum Radius</label>
-        <input v-model="minRadius" class="slider is-circle" type="range" min="0" max="400" @mouseup="calculateImage" />
-      </div>
-
-      <div class="column field">
-        <label class="label">Maximum Radius</label>
-        <input v-model="maxRadius" class="slider is-circle" type="range" min="0" max="400" @mouseup="calculateImage" />
-      </div>
-
-      <div class="column field">
-        <label class="label">Invert Filter</label>
-        <input v-model="inverse" class="is-rounded" type="checkbox" checked="checked" @change="calculateImage" />
-      </div>
-
-      <div class="column field">
-        <label class="label">Gamma</label>
+        <label class="label">
+          Minimum Radius:
+          <span class="tag is-primary">{{ minRadius }}</span>
+        </label>
         <input
-          v-model="gamma"
-          class="slider is-circle"
+          v-model="minRadius"
+          id="min-radius"
+          class="slider is-circle is-primary"
           type="range"
           min="0"
+          max="400"
+          @mouseup="calculateImage"
+        />
+      </div>
+
+      <div class="column field">
+        <label class="label">
+          Maximum Radius:
+          <span class="tag is-primary">{{ maxRadius }}</span>
+        </label>
+        <input
+          v-model="maxRadius"
+          class="slider is-circle is-primary"
+          type="range"
+          min="0"
+          max="400"
+          @mouseup="calculateImage"
+        />
+      </div>
+
+      <div class="column field">
+        <label class="label">
+          Gamma:
+          <span class="tag is-primary">{{ gamma }}</span>
+        </label>
+        <input
+          v-model="gamma"
+          class="slider is-circle is-primary"
+          type="range"
+          min="0.1"
           max="3"
           step="0.1"
           @mouseup="calculateImage"
@@ -47,11 +65,31 @@
       </div>
 
       <div class="column field">
+        <label class="label">
+          Brush size:
+          <span class="tag is-primary">{{ brushSize }}</span>
+        </label>
+        <input v-model="brushSize" class="slider is-circle is-primary" type="range" min="5" max="50" step="1" />
+      </div>
+
+      <div class="column field is-narrow">
+        <label class="label">Invert Filter</label>
+        <input
+          id="invert"
+          v-model="inverse"
+          type="checkbox"
+          class="switch is-rounded is-small"
+          @change="calculateImage"
+        />
+        <label for="invert"></label>
+      </div>
+
+      <div class="column field is-narrow is-flex is-align-items-center">
         <button @click="clearMask" class="button is-primary">Clear Mask</button>
       </div>
     </div>
 
-    <div class="columns box canvas">
+    <div class="columns box canvas px-0 py-0">
       <canvas
         ref="canvas"
         class="column px-0 py-0"
@@ -60,6 +98,7 @@
         @click="maskClick"
         @mousedown="masking = true"
         @mouseup="cancelMasking"
+        @mouseleave="cancelMasking"
         @mousemove="maskDrag"
       />
       <canvas ref="resultCanvas" class="column px-0 py-0" width="512" height="512" />
@@ -68,18 +107,19 @@
 </template>
 
 <script setup>
-import nj from 'numjs'
-import { fftshift } from 'fftshift'
-import { drawImage } from 'canvas-object-fit'
 import { ref, onMounted } from 'vue'
+import nj from 'numjs'
+import { fftshift, ifftshift } from 'fftshift'
+import { drawImage } from 'canvas-object-fit'
 import bresenham from '@/scripts/bresenham'
 
-const filename = ref('No file selected')
+const file = ref(null)
 
 const minRadius = ref(0)
 const maxRadius = ref(400)
 const inverse = ref(false)
 const gamma = ref(1.5)
+const brushSize = ref(10)
 const masking = ref(false)
 
 const canvas = ref(null)
@@ -137,9 +177,8 @@ const loadImage = function loadImage(input) {
     }
   }
 
-  const file = files[0]
-  filename.value = file.name
-  reader.readAsDataURL(file)
+  file.value = files[0]
+  reader.readAsDataURL(file.value)
 }
 
 function calculateImage() {
@@ -175,7 +214,15 @@ function calculateImage() {
     magnitudesArray.push(magnitudeValue)
   }
 
-  const ifft = nj.ifft(fft).reshape(-1).tolist()
+  const fftList = fft.tolist()
+  ifftshift(fftList)
+
+  for (let i = 0; i < imageData.height; i++) {
+    ifftshift(fftList[i])
+  }
+
+  const unshiftedFFT = nj.array(fftList)
+  const ifft = nj.ifft(unshiftedFFT).reshape(-1).tolist()
 
   const inverseFourier = new ImageData(imageData.width, imageData.height)
   const fourierMagnitudeSpectrum = new ImageData(imageData.width, imageData.height)
@@ -221,7 +268,7 @@ function maskClick(event) {
 }
 
 function maskSpectrum(x, y) {
-  const radius = 10
+  const radius = brushSize.value
   for (let i = -radius; i < radius; i++) {
     for (let j = -radius; j < radius; j++) {
       if (Math.sqrt(i * i + j * j) > radius) {
@@ -234,6 +281,10 @@ function maskSpectrum(x, y) {
 }
 
 function cancelMasking() {
+  if (!masking.value) {
+    return
+  }
+
   masking.value = false
   lastMaskPoint = null
   calculateImage()
@@ -258,14 +309,45 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-img {
-  margin-top: 16px;
-  width: 100%;
-}
+.section {
+  .file .file-cta {
+    background-color: white;
 
-.canvas {
-  > canvas:first-child {
-    border-right: 1px dashed rgba(0, 0, 0, 0.2);
+    &:hover {
+      background-color: #fbfbfb;
+    }
+  }
+
+  .canvas {
+    overflow: hidden;
+    display: flex;
+
+    > canvas {
+      width: 50%;
+    }
+
+    > canvas:first-child {
+      border-right: 1px dashed rgba(0, 0, 0, 0.2);
+      width: calc(50% - 1px);
+    }
+  }
+
+  input[type='range'].slider {
+    margin: 0;
+  }
+
+  .label {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: nowrap;
+
+    > .tag {
+      margin-left: 6px;
+      font-size: 0.6rem;
+      line-height: 0.8rem;
+      min-width: 2.2rem;
+    }
   }
 }
 </style>
