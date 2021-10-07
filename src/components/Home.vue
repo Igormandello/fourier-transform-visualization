@@ -1,25 +1,70 @@
 <template>
-  <h1>FFT</h1>
-  <input type="file" accept="image/png, image/jpeg" :onchange="loadImage" />
-  <div>
-    <canvas
-      ref="canvas"
-      width="512"
-      height="512"
-      @click="maskClick"
-      @mousedown="masking = true"
-      @mouseup="cancelMasking"
-      @mousemove="maskDrag"
-    />
-    <canvas ref="resultCanvas" width="512" height="512" />
-  </div>
+  <section class="section">
+    <div class="columns is-centered">
+      <div class="column is-one-quarter">
+        <div class="file is-centered is-boxed has-name">
+          <label class="file-label">
+            <input class="file-input" type="file" accept="image/png, image/jpeg" :onchange="loadImage" />
+            <span class="file-cta">
+              <span class="file-icon">
+                <FontAwesomeIcon icon="upload" />
+              </span>
+              <span class="file-label">Choose an image...</span>
+            </span>
+            <span class="file-name">{{ filename }}</span>
+          </label>
+        </div>
+      </div>
+    </div>
 
-  <input v-model="minRadius" type="range" min="0" max="400" @mouseup="calculateImage" />
-  <input v-model="maxRadius" type="range" min="0" max="400" @mouseup="calculateImage" />
-  <input v-model="inverse" type="checkbox" @change="calculateImage" />
+    <div class="columns is-centered">
+      <div class="column field">
+        <label class="label">Minimum Radius</label>
+        <input v-model="minRadius" class="slider is-circle" type="range" min="0" max="400" @mouseup="calculateImage" />
+      </div>
 
-  <input v-model="gamma" type="range" min="0" max="3" step="0.1" @mouseup="calculateImage" />
-  <button @click="clearMask">Clear Mask</button>
+      <div class="column field">
+        <label class="label">Maximum Radius</label>
+        <input v-model="maxRadius" class="slider is-circle" type="range" min="0" max="400" @mouseup="calculateImage" />
+      </div>
+
+      <div class="column field">
+        <label class="label">Invert Filter</label>
+        <input v-model="inverse" class="is-rounded" type="checkbox" checked="checked" @change="calculateImage" />
+      </div>
+
+      <div class="column field">
+        <label class="label">Gamma</label>
+        <input
+          v-model="gamma"
+          class="slider is-circle"
+          type="range"
+          min="0"
+          max="3"
+          step="0.1"
+          @mouseup="calculateImage"
+        />
+      </div>
+
+      <div class="column field">
+        <button @click="clearMask" class="button is-primary">Clear Mask</button>
+      </div>
+    </div>
+
+    <div class="columns box canvas">
+      <canvas
+        ref="canvas"
+        class="column px-0 py-0"
+        width="512"
+        height="512"
+        @click="maskClick"
+        @mousedown="masking = true"
+        @mouseup="cancelMasking"
+        @mousemove="maskDrag"
+      />
+      <canvas ref="resultCanvas" class="column px-0 py-0" width="512" height="512" />
+    </div>
+  </section>
 </template>
 
 <script setup>
@@ -27,6 +72,9 @@ import nj from 'numjs'
 import { fftshift } from 'fftshift'
 import { drawImage } from 'canvas-object-fit'
 import { ref, onMounted } from 'vue'
+import bresenham from '@/scripts/bresenham'
+
+const filename = ref('No file selected')
 
 const minRadius = ref(0)
 const maxRadius = ref(400)
@@ -42,6 +90,7 @@ let resultContext = ref(null)
 let imageData = null
 let originalFFT = null
 let mask = nj.zeros([512, 512])
+let lastMaskPoint = null
 
 const loadImage = function loadImage(input) {
   const files = input.target.files
@@ -88,7 +137,9 @@ const loadImage = function loadImage(input) {
     }
   }
 
-  reader.readAsDataURL(files[0])
+  const file = files[0]
+  filename.value = file.name
+  reader.readAsDataURL(file)
 }
 
 function calculateImage() {
@@ -154,11 +205,18 @@ function maskDrag(event) {
     return
   }
 
-  maskSpectrum(event.offsetX, event.offsetY)
+  const { x, y } = calculateCoordinates(event)
+  if (lastMaskPoint !== null) {
+    bresenham(x, lastMaskPoint.x, y, lastMaskPoint.y, maskSpectrum)
+  }
+
+  lastMaskPoint = { x, y }
+  maskSpectrum(x, y)
 }
 
 function maskClick(event) {
-  maskSpectrum(event.offsetX, event.offsetY)
+  const { x, y } = calculateCoordinates(event)
+  maskSpectrum(x, y)
   calculateImage()
 }
 
@@ -177,6 +235,7 @@ function maskSpectrum(x, y) {
 
 function cancelMasking() {
   masking.value = false
+  lastMaskPoint = null
   calculateImage()
 }
 
@@ -185,15 +244,28 @@ function clearMask() {
   calculateImage()
 }
 
+function calculateCoordinates(event) {
+  return {
+    x: Math.floor((event.target.width * event.offsetX) / event.target.clientWidth),
+    y: Math.floor((event.target.height * event.offsetY) / event.target.clientHeight)
+  }
+}
+
 onMounted(() => {
   context = canvas.value.getContext('2d')
   resultContext = resultCanvas.value.getContext('2d')
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 img {
   margin-top: 16px;
   width: 100%;
+}
+
+.canvas {
+  > canvas:first-child {
+    border-right: 1px dashed rgba(0, 0, 0, 0.2);
+  }
 }
 </style>
