@@ -25,16 +25,13 @@
     </div>
 
     <div class="columns box canvas px-0 py-0">
-      <canvas
-        ref="canvas"
+      <DrawableCanvas
+        v-model:context="context"
         class="column px-0 py-0"
-        :width="imageWidth"
-        :height="imageHeight"
-        @click="maskClick"
-        @mousedown="masking = true"
-        @mouseup="cancelMasking"
-        @mouseleave="cancelMasking"
-        @mousemove="maskDrag"
+        :canvasWidth="imageWidth"
+        :canvasHeight="imageHeight"
+        @drawPoint="maskSpectrum"
+        @finishedDrawing="calculateImage"
       />
       <canvas ref="resultCanvas" class="column px-0 py-0" :width="imageWidth" :height="imageHeight" />
     </div>
@@ -44,11 +41,11 @@
 <script setup>
 import Slider from '@/components/Slider.vue'
 import ImageInput from '@/components/ImageInput.vue'
+import DrawableCanvas from '@/components/DrawableCanvas.vue'
 
 import { ref, onMounted } from 'vue'
 import nj from 'numjs'
 import { fft, ifft, magnitudes } from '@/scripts/fourier'
-import bresenham from '@/scripts/bresenham'
 import fillGreyscale from '@/scripts/imageData'
 
 const hasFile = ref(false)
@@ -59,19 +56,16 @@ const inverse = ref(false)
 const gamma = ref('1.5')
 const brushSize = ref('10')
 const minimumValue = ref('0')
-const masking = ref(false)
 
-const canvas = ref(null)
-const resultCanvas = ref(null)
 const context = ref(null)
 const resultContext = ref(null)
+const resultCanvas = ref(null)
 
 const imageWidth = 512
 const imageHeight = 512
 
 let originalFFT = null
 let mask = nj.zeros([imageWidth, imageHeight])
-let lastMaskPoint = null
 
 function imageLoaded(imageData) {
   hasFile.value = true
@@ -98,28 +92,8 @@ function calculateImage() {
     fillGreyscale(inverseFourier, index, imageValue)
   }
 
-  resultContext.putImageData(inverseFourier, 0, 0)
-  context.putImageData(fourierMagnitudeSpectrum, 0, 0)
-}
-
-function maskDrag(event) {
-  if (!masking.value) {
-    return
-  }
-
-  const { x, y } = calculateCoordinates(event)
-  if (lastMaskPoint !== null) {
-    bresenham(x, lastMaskPoint.x, y, lastMaskPoint.y, maskSpectrum)
-  }
-
-  lastMaskPoint = { x, y }
-  maskSpectrum(x, y)
-}
-
-function maskClick(event) {
-  const { x, y } = calculateCoordinates(event)
-  maskSpectrum(x, y)
-  calculateImage()
+  resultContext.value.putImageData(inverseFourier, 0, 0)
+  context.value.putImageData(fourierMagnitudeSpectrum, 0, 0)
 }
 
 function maskSpectrum(x, y) {
@@ -135,30 +109,12 @@ function maskSpectrum(x, y) {
   }
 }
 
-function cancelMasking() {
-  if (!masking.value) {
-    return
-  }
-
-  masking.value = false
-  lastMaskPoint = null
-  calculateImage()
-}
-
 function clearMask() {
   mask = nj.zeros([imageWidth, imageHeight])
   calculateImage()
 }
 
-function calculateCoordinates(event) {
-  return {
-    x: Math.floor((event.target.width * event.offsetX) / event.target.clientWidth),
-    y: Math.floor((event.target.height * event.offsetY) / event.target.clientHeight)
-  }
-}
-
 onMounted(() => {
-  context.value = canvas.value.getContext('2d')
   resultContext.value = resultCanvas.value.getContext('2d')
 })
 </script>
