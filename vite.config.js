@@ -6,8 +6,8 @@ export default ({ mode }) => {
   return defineConfig({
     plugins: [vue()],
 
-    define: {
-        global: mode === 'production' ? undefined : {}
+    define: mode === 'production' ? undefined : {
+        global: {}
     },
 
     resolve: {
