@@ -1,5 +1,5 @@
 <template>
-  <div class="column field">
+  <div class="column field is-one-fifth-desktop">
     <label class="label">
       {{ label }}:
       <span class="tag is-primary">{{ modelValue }}</span>
