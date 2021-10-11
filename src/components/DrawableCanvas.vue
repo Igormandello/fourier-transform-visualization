@@ -12,18 +12,20 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, toRef } from 'vue'
 import bresenham from '@/scripts/bresenham'
 
-defineProps({
+const props = defineProps({
   width: Number,
-  height: Number
+  height: Number,
+  shouldInterpolateDrag: Boolean
 })
 
 const emit = defineEmits(['drawPoint', 'finishedDrawing', 'update:context'])
 
 const canvas = ref(null)
 const drawing = ref(false)
+const shouldInterpolateDrag = toRef(props, 'shouldInterpolateDrag')
 
 let lastDrawnPoint = null
 function drawDrag(event) {
@@ -32,7 +34,7 @@ function drawDrag(event) {
   }
 
   const { x, y } = calculateCoordinates(event)
-  if (lastDrawnPoint) {
+  if (lastDrawnPoint && shouldInterpolateDrag.value) {
     bresenham(x, lastDrawnPoint.x, y, lastDrawnPoint.y, (lineX, lineY) => emit('drawPoint', lineX, lineY))
   }
 

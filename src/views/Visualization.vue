@@ -45,6 +45,7 @@
         class="column px-0 py-0"
         :width="imageWidth"
         :height="imageHeight"
+        :shouldInterpolateDrag="true"
         @drawPoint="maskSpectrum"
         @finishedDrawing="calculateImage"
       />
