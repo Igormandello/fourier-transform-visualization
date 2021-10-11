@@ -1,5 +1,5 @@
 <template>
-  <div class="column field is-one-fifth-desktop">
+  <div class="column field">
     <label class="label">
       {{ label }}:
       <span class="tag is-primary">{{ modelValue }}</span>
@@ -20,10 +20,10 @@
 import { ref, toRef, watch } from 'vue'
 
 const props = defineProps({
-  modelValue: String,
+  modelValue: String | Number,
   label: String,
-  min: String,
-  max: String,
+  min: String | Number,
+  max: String | Number,
   step: String
 })
 
@@ -32,7 +32,7 @@ const emit = defineEmits(['update:modelValue', 'change'])
 const modelValue = toRef(props, 'modelValue')
 const inputValue = ref(modelValue.value)
 
-watch(inputValue, (value) => emit('update:modelValue', value))
+watch(inputValue, value => emit('update:modelValue', Number.parseFloat(value)))
 </script>
 
 <style lang="scss" scoped>

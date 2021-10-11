@@ -7,11 +7,11 @@
     </div>
 
     <div class="columns is-multiline is-centered is-variable is-6 mt-4" v-else>
-      <Slider v-model="minRadius" class="is-one-third-tablet" label="Minimum Radius" min="0" max="400" step="1" @change="calculateImage" />
-      <Slider v-model="maxRadius" class="is-one-third-tablet" label="Maximum Radius" min="0" max="400" step="1" @change="calculateImage" />
-      <Slider v-model="gamma" class="is-one-third-tablet" label="Gamma" min="0.1" max="3" step="0.1" @change="calculateImage" />
-      <Slider v-model="brushSize" class="is-half-tablet" label="Brush size" min="5" max="50" step="1" />
-      <Slider v-model="minimumValue" class="is-half-tablet" label="Minimum value" min="0" max="255" step="1" @change="calculateImage" />
+      <Slider v-model="minRadius" class="is-one-third-tablet is-one-fifth-desktop" label="Minimum Radius" min="0" max="400" step="1" @change="calculateImage" />
+      <Slider v-model="maxRadius" class="is-one-third-tablet is-one-fifth-desktop" label="Maximum Radius" min="0" max="400" step="1" @change="calculateImage" />
+      <Slider v-model="gamma" class="is-one-third-tablet is-one-fifth-desktop" label="Gamma" min="0.1" max="3" step="0.1" @change="calculateImage" />
+      <Slider v-model="brushSize" class="is-half-tablet is-one-fifth-desktop" label="Brush size" min="5" max="50" step="1" />
+      <Slider v-model="minimumValue" class="is-half-tablet is-one-fifth-desktop" label="Minimum value" min="0" max="255" step="1" @change="calculateImage" />
 
       <div class="column field is-flex is-align-items-center is-justify-content-center">
         <label class="radio mr-4">
@@ -39,7 +39,7 @@
       </div>
     </div>
 
-    <div class="columns box canvas px-0 py-0">
+    <div class="columns box canvas px-0 py-0 mt-1">
       <DrawableCanvas
         v-model:context="context"
         class="column px-0 py-0"
