@@ -1,8 +1,8 @@
 <template>
   <canvas
     ref="canvas"
-    :width="canvasWidth"
-    :height="canvasHeight"
+    :width="width"
+    :height="height"
     @click="drawClick"
     @mousemove="drawDrag"
     @mousedown="drawing = true"
@@ -16,8 +16,8 @@ import { ref, onMounted } from 'vue'
 import bresenham from '@/scripts/bresenham'
 
 defineProps({
-  canvasWidth: Number,
-  canvasHeight: Number
+  width: Number,
+  height: Number
 })
 
 const emit = defineEmits(['drawPoint', 'finishedDrawing', 'update:context'])

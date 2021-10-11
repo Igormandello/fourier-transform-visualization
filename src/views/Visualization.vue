@@ -1,17 +1,32 @@
 <template>
   <section class="section container is-max-widescreen">
-    <div class="columns is-centered" v-if="!hasFile">
+    <div class="columns is-centered mb-4" v-if="!hasFile">
       <div class="column is-one-quarter">
         <ImageInput @imageLoaded="imageLoaded" :width="imageWidth" :height="imageHeight" />
       </div>
     </div>
 
-    <div class="columns is-multiline is-centered is-variable is-6" v-else>
+    <div class="columns is-multiline is-centered is-variable is-6 mt-4" v-else>
       <Slider v-model="minRadius" class="is-one-third-tablet" label="Minimum Radius" min="0" max="400" step="1" @change="calculateImage" />
       <Slider v-model="maxRadius" class="is-one-third-tablet" label="Maximum Radius" min="0" max="400" step="1" @change="calculateImage" />
       <Slider v-model="gamma" class="is-one-third-tablet" label="Gamma" min="0.1" max="3" step="0.1" @change="calculateImage" />
       <Slider v-model="brushSize" class="is-half-tablet" label="Brush size" min="5" max="50" step="1" />
       <Slider v-model="minimumValue" class="is-half-tablet" label="Minimum value" min="0" max="255" step="1" @change="calculateImage" />
+
+      <div class="column field is-flex is-align-items-center is-justify-content-center">
+        <label class="radio mr-4">
+          <input v-model="filterType" value="ideal" type="radio" name="filterType" />
+          Ideal
+        </label>
+        <label class="radio mr-4">
+          <input v-model="filterType" value="butterworth" type="radio" name="filterType" />
+          Butterworth
+        </label>
+        <label class="radio">
+          <input v-model="filterType" value="gaussian" type="radio" name="filterType" />
+          Gaussian
+        </label>
+      </div>
 
       <div class="column field is-narrow">
         <label class="label">Invert Filter</label>
@@ -28,12 +43,12 @@
       <DrawableCanvas
         v-model:context="context"
         class="column px-0 py-0"
-        :canvasWidth="imageWidth"
-        :canvasHeight="imageHeight"
+        :width="imageWidth"
+        :height="imageHeight"
         @drawPoint="maskSpectrum"
         @finishedDrawing="calculateImage"
       />
-      <canvas ref="resultCanvas" class="column px-0 py-0" :width="imageWidth" :height="imageHeight" />
+      <DrawableCanvas v-model:context="resultContext" class="column px-0 py-0" :width="imageWidth" :height="imageHeight" />
     </div>
   </section>
 </template>
@@ -43,7 +58,7 @@ import Slider from '@/components/Slider.vue'
 import ImageInput from '@/components/ImageInput.vue'
 import DrawableCanvas from '@/components/DrawableCanvas.vue'
 
-import { ref, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import nj from 'numjs'
 import { fft, ifft, magnitudes } from '@/scripts/fourier'
 import fillGreyscale from '@/scripts/imageData'
@@ -56,16 +71,18 @@ const inverse = ref(false)
 const gamma = ref('1.5')
 const brushSize = ref('10')
 const minimumValue = ref('0')
+const filterType = ref('ideal')
 
 const context = ref(null)
 const resultContext = ref(null)
-const resultCanvas = ref(null)
 
 const imageWidth = 512
 const imageHeight = 512
 
 let originalFFT = null
 let mask = nj.zeros([imageWidth, imageHeight])
+
+watch(filterType, calculateImage)
 
 function imageLoaded(imageData) {
   hasFile.value = true
@@ -76,7 +93,7 @@ function imageLoaded(imageData) {
 
 function calculateImage() {
   const fft = originalFFT.clone()
-  const { maxMag, magnitudesList } = magnitudes(fft, minRadius.value, maxRadius.value, inverse.value, mask)
+  const { maxMag, magnitudesList } = magnitudes(fft, filterType.value, minRadius.value, maxRadius.value, inverse.value, mask)
 
   const ifftList = ifft(fft)
   const inverseFourier = new ImageData(imageWidth, imageHeight)
@@ -113,10 +130,6 @@ function clearMask() {
   mask = nj.zeros([imageWidth, imageHeight])
   calculateImage()
 }
-
-onMounted(() => {
-  resultContext.value = resultCanvas.value.getContext('2d')
-})
 </script>
 
 <style lang="scss" scoped>
@@ -132,6 +145,7 @@ onMounted(() => {
     > canvas:first-child {
       border-right: 1px dashed rgba(0, 0, 0, 0.2);
       width: calc(50% - 1px);
+      cursor: pointer;
     }
   }
 }

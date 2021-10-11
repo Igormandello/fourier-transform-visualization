@@ -1,5 +1,8 @@
 import nj from 'numjs'
 import { fftshift, ifftshift } from 'fftshift'
+import { ideal, butterworth, gaussian } from '@/scripts/filters'
+
+const filterByType = { ideal, butterworth, gaussian }
 
 function fft(imageData) {
   const fourier = []
@@ -36,7 +39,7 @@ function ifft(fft) {
   return nj.ifft(unshiftedFFT).reshape(-1).tolist()
 }
 
-function magnitudes(fft, minRadius, maxRadius, inverse, mask) {
+function magnitudes(fft, filterType, minRadius, maxRadius, inverse, mask) {
   const height = fft.shape[0]
   const width = fft.shape[1]
 
@@ -44,8 +47,14 @@ function magnitudes(fft, minRadius, maxRadius, inverse, mask) {
   const magnitudesList = []
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      const realValue = fft.get(y, x, 0)
-      const imaginaryValue = fft.get(y, x, 1)
+      const distanceToCenter = Math.sqrt(Math.pow(x - width / 2, 2) + Math.pow(y - height / 2, 2))
+
+      const oldRealValue = fft.get(y, x, 0)
+      const oldImaginaryValue = fft.get(y, x, 1)
+      const { realValue, imaginaryValue } = filterByType[filterType](oldRealValue, oldImaginaryValue, distanceToCenter, minRadius, maxRadius, inverse)
+
+      fft.set(y, x, 0, realValue)
+      fft.set(y, x, 1, imaginaryValue)
       const module = Math.sqrt(realValue * realValue + imaginaryValue * imaginaryValue)
 
       const magnitudeValue = Math.log(module)
@@ -53,11 +62,7 @@ function magnitudes(fft, minRadius, maxRadius, inverse, mask) {
         maxMag = magnitudeValue
       }
 
-      const distanceToCenter = Math.sqrt(Math.pow(x - width / 2, 2) + Math.pow(y - height / 2, 2))
-
-      const isOutside = distanceToCenter < minRadius || distanceToCenter > maxRadius
-      const isInside = distanceToCenter > minRadius && distanceToCenter < maxRadius
-      if ((!inverse && isOutside) || (inverse && isInside) || mask.get(y, x)) {
+      if (mask.get(y, x)) {
         magnitudesList.push(0)
         fft.set(y, x, 0, 0)
         fft.set(y, x, 1, 0)
